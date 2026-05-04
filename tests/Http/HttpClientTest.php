@@ -835,6 +835,49 @@ class HttpClientTest extends TestCase
         });
     }
 
+    public function testNoIndexAreLost()
+    {
+        $this->factory->fake();
+
+        $this->factory->asMultipart()->post('http://foo.com/multipart', [
+            'user' => [
+                'name' => 'foo',
+            ]
+        ]);
+
+        $this->factory->assertSent(function (Request $request) {
+//            dd($request->toPsrRequest()->getBody()->getContents());
+            return $request->url() === 'http://foo.com/multipart' &&
+                Str::startsWith($request->header('Content-Type')[0], 'multipart') &&
+                $request[0]['name'] === 'user[name]' &&
+                $request[0]['contents'] === 'foo';
+        });
+    }
+
+    public function testNoValuesAreLost()
+    {
+        $this->factory->fake();
+
+        $this->factory->asMultipart()->post('http://foo.com/multipart', [
+            'user' => [
+                'name' => 'foo',
+            ],
+            'admin' => [
+                'name' => 'bar',
+            ]
+        ]);
+
+        $this->factory->assertSent(function (Request $request) {
+//            dd($request->toPsrRequest()->getBody()->getContents());
+            return $request->url() === 'http://foo.com/multipart' &&
+                Str::startsWith($request->header('Content-Type')[0], 'multipart') &&
+                $request[0]['name'] === 'user[name]' &&
+                $request[0]['contents'] === 'foo' &&
+                $request[0]['name'] === 'admin[name]' &&
+                $request[0]['contents'] === 'bar';
+        });
+    }
+
     public function testCanSendMultipartDataWithArrayValues()
     {
         $this->factory->fake();
